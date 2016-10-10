@@ -6,6 +6,7 @@ import org.testng.annotations.BeforeClass;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.testng.Assert;
@@ -54,8 +55,57 @@ public class HHTest extends Steps {
 	}
 	
 	@Test
-	public void Test2 () throws IOException {
-
+	public void Test2 () {
+		int RussiaId = -1;
+		
+		String url = "http://api.hh.ru/areas/countries";
+		HttpResponse response = SendHttpReq(url);
+		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+		JSONParser parser = new JSONParser();
+		
+		try {
+			String responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
+			
+			Assert.assertTrue(parser.parse(responseString) instanceof JSONArray);
+			JSONArray CountryPayload = (JSONArray) parser.parse(responseString);
+			for (int i=0; i< CountryPayload.size(); i++){
+				JSONObject CountryObject = (JSONObject) CountryPayload.get(i);
+				if ("Россия".equals(CountryObject.get("name"))) {
+					RussiaId = Integer.parseInt((String) CountryObject.get("id"));
+					break;
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		Assert.assertNotEquals(RussiaId, -1);
+		
+		url = "http://api.hh.ru/employers?text=новые%20облачные&area="+RussiaId;
+		response = SendHttpReq(url);
+		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+		
+		String responseString;
+		try {
+			responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
+			JSONObject EmployerFound = (JSONObject) parser.parse(responseString);
+			Assert.assertNotEquals(0, (Long) EmployerFound.get("found"));
+			JSONArray itemsArray = (JSONArray) EmployerFound.get("items");
+			boolean found = false;
+			for (int i = 0; i < itemsArray.size(); i++) {
+				JSONObject employerItem = (JSONObject) itemsArray.get(i);
+				if (expectedvalue.get(1).equals(employerItem.get("name"))) {
+					found = true;
+					break;
+				}
+			}
+			Assert.assertTrue(found);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
