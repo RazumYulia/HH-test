@@ -110,9 +110,54 @@ public class HHTest extends Steps {
 	}
 	
 	@Test
-	public void Test3 () throws IOException {
+	public void Test3 () {
+		int SpbId = -1;
 		
-
+		String url = "http://api.hh.ru/areas";
+		HttpResponse response = SendHttpReq(url);
+		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+		JSONParser parser = new JSONParser();
+		
+		try {
+			String responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
+			
+			Assert.assertTrue(parser.parse(responseString) instanceof JSONArray);
+			JSONArray CountryPayload = (JSONArray) parser.parse(responseString);
+			for (int i=0; i< CountryPayload.size(); i++){
+				JSONObject CountryObject = (JSONObject) CountryPayload.get(i);
+				if ("Россия".equals(CountryObject.get("name"))) {
+					JSONArray AreaPayload = (JSONArray) CountryObject.get("areas");
+					for (int j=0; j< AreaPayload.size(); j++){
+						JSONObject AreaFound = (JSONObject) AreaPayload.get(j);
+						if ("Санкт-Петербург".equals(AreaFound.get("name"))) {
+							SpbId = Integer.parseInt((String) AreaFound.get("id"));
+							break;
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		Assert.assertNotEquals(SpbId, -1);
+		
+		url = "http://api.hh.ru/vacancies?text=QA%20Automation%20Engineer%20(Server)&area="+SpbId;
+		response = SendHttpReq(url);
+		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+		
+		String responseString;
+		try {
+			responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
+			JSONObject EmployerFound = (JSONObject) parser.parse(responseString);
+			Assert.assertEquals(Boolean.parseBoolean(expectedvalue.get(2)), (Long) EmployerFound.get("found")>0);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }
