@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Aluminum_BE">
+    <test name="HH-test">
+        <classes>
+            <class name="org.test.hh.HHTest"></class>
+        </classes>
+    </test>
+</suite>
